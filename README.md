@@ -1,2 +1,1 @@
-# contest
-huawei-contest
+huawei 2016 software contest
