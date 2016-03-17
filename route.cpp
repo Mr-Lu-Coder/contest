@@ -1,32 +1,108 @@
-
 #include "route.h"
 #include "lib_record.h"
 #include <stdio.h>
-
-
-//ä½ è¦å®Œæˆçš„åŠŸèƒ½æ€»å…¥å£
-
-//edge é‚»æ¥è¡¨æ•°ç»„
-//edge_num è¾¹çš„æ•°é‡
-//s t vv, èµ·ç‚¹ã€ç»ˆç‚¹ã€è¦ç»è¿‡çš„ç‚¹é›†
-
-//ä¸¤ç‚¹è¾¹æ‰€åœ¨çš„ç´¢å¼•
-int index[605][605];
-int weight[605][605];
+#include <string.h>
+#include <iostream>
+using namespace std;
+const int MAX_INT = 0x7fffffff;
+const int maxn_edge = 4800;
+const int maxn_node = 605;
 #define WEIGHT_MAX 100
-void search_route(Edge *edge, int edge_num, int s, int t, int *vv)
+//ÄãÒªÍê³ÉµÄ¹¦ÄÜ×ÜÈë¿Ú
+
+//edge ÁÚ½Ó±íÊı×é
+//edge_num ±ßµÄÊıÁ¿
+//s t vv, Æğµã¡¢ÖÕµã¡¢Òª¾­¹ıµÄµã¼¯
+
+//Á½µã±ßËùÔÚµÄË÷Òı
+
+
+
+//ÒòÎªÔÚÕâ¸öº¯ÊıÀïÒªÓÃËùÒÔÎÒ°ÑËùÓĞµÄÓĞ¶¨Òå³ÉÈ«¾Ö±äÁ¿£¬
+//°Ñfuture_net.cppÀïµÄ¸ø¸³Öµ¹ıÀ´ÁË
+int head[maxn_node];
+Edge edge[maxn_edge];
+int rev_head[maxn_node];
+Edge rev_edge[maxn_edge];
+
+int index[maxn_node][maxn_node];
+int weight[maxn_node][maxn_node];
+int pre[maxn_node];
+int tmp_pre[maxn_node];
+int is_find;
+int vv[55];
+int ans[maxn_node];
+int ans_num;
+int edge_num;
+int vv_num;
+int mmin = MAX_INT;
+
+
+bool vis[maxn_node];
+
+
+void Init()
+{
+    is_find = 0;
+    mmin = MAX_INT;
+    for (int i = 0; i < maxn_node; i++)
+    {
+        pre[i] = tmp_pre[i] = -1;
+    }
+    memset(vis, 0, sizeof(vis));
+    ans_num = 0;
+}
+
+bool contain_allvv(int *pre)
 {
 
-    for (int i = 0; i < edge_num; i++)
+    for (int i = 1; i <= vv_num; i++)
     {
-        printf("%d %d %d %d\n", edge[i].from, edge[i].to, edge[i].w, edge[i].cnt);
+        int flag = 0;
+        for (int j = 0; j < maxn_node; j++)
+        {
+            //cout << vv[i] << " " << pre[j] << endl;
+            if (pre[j] == vv[i])
+            {
+                flag = 1;
+                break;
+            }
+        }
+        if (!flag) return false;
     }
+    return true;
+}
 
-    unsigned short result[] = {2, 6, 3};//ç¤ºä¾‹ä¸­çš„ä¸€ä¸ªè§£
-    //weight åˆå§‹åŒ–ä¸ºæœ€å¤§å€¼
+void output(int s, int cur)
+{
+    if (cur != s && cur != -1) output(s, pre[cur]);
+
+        cout << cur << " ";
+        ans[ans_num++] = cur;
+
+}
+void search_route(int *import_head, Edge *import_edge, int *import_rev_head, Edge *import_rev_edge,
+        int import_edgenum, int s, int t, int *import_vv, int import_num)
+{
+    memcpy(head, import_head, sizeof(head));
+    memcpy(edge, import_edge, sizeof(edge));
+    memcpy(rev_head, import_rev_head, sizeof(rev_head));
+    memcpy(rev_edge, import_rev_edge, sizeof(rev_edge));
+    memcpy(vv, import_vv, sizeof(vv));
+    vv_num = import_num;
+    edge_num = import_edgenum;
+    //for (int i = 0; i < edge_num; i++)
+    //{
+    //    printf("%d %d %d %d\n", edge[i].from, edge[i].to, edge[i].w, edge[i].cnt);
+    //}
+    //printf("%d %d\n", s, t);
+    //for (int i = 1; i <= vv_num; i++)
+    //    printf("%d ", vv[i]);
+    //printf("\n");
+    //weight ³õÊ¼»¯Îª×î´óÖµ
     for (int i = 0; i <= 600; i++)
         for (int j = 0; j <= 600; j++) weight[i][j] = WEIGHT_MAX;
-    //å¾—åˆ°ä»»æ„ä¸¤ç‚¹é—´æƒå€¼æœ€å°çš„ç´¢å¼•
+    //µÃµ½ÈÎÒâÁ½µã¼äÈ¨Öµ×îĞ¡µÄË÷Òı
     for (int i = 0; i < edge_num; i++) {
         int x = edge[i].from;
         int y = edge[i].to;
@@ -37,17 +113,51 @@ void search_route(Edge *edge, int edge_num, int s, int t, int *vv)
         }
     }
 
+    printf("mmin Init: %d\n", mmin);
 
+    Init();
 
+    dfs(s, t, 0);
+    cout << is_find << " " << mmin<< endl;
+    output(s, t);
+    cout << endl;
+    for (int i = 0; i < ans_num-1; i++)
+    {
+        cout << index[ans[i]][ans[i+1]] << " ";
+        record_result(index[ans[i]][ans[i+1]]);
+    }
+    cout << endl;
 
-    for (int i = 0; i < 3; i++)
-        record_result(result[i]);
 }
-void MainStream(Edge edge[],int maxn,int s,int t)
-{
 
-}
-void dfs()
+
+void dfs(int cur, int t, int curw)
 {
-    static stack<int> rout;
+    //printf("in %d %d %d\n", cur, t, curw);
+    if (cur == t){
+        //output();
+        if  (curw < mmin)
+        {
+            if (contain_allvv(tmp_pre)) {
+                is_find = 1;
+                mmin = curw;
+                memcpy(pre, tmp_pre, sizeof(pre));
+            }
+
+        }
+    }
+    else {
+        for (int i = head[cur]; i != -1; i = edge[i].next)
+        {
+            //ºÍcurÏàÁ¬µÄËùÓĞµÄµã¿ÉÒÔÏÈÅÅ¸öĞò£¬ÓÅÏÈÑ¡ÔñvvÀïµÄ
+            int to = edge[i].to;
+            if (!vis[to]) {
+                vis[to] = 1;
+                tmp_pre[to] = cur;
+                dfs(to, t, curw+edge[i].w);
+                tmp_pre[to] = -1;
+                vis[to] = 0;
+            }
+        }
+    }
 }
